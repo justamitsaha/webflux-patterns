@@ -14,17 +14,17 @@ public class OrderFulfillmentService {
 
     @Autowired
     private List<Orchestrator> orchestrators;
-    
-    public Mono<OrchestrationRequestContext> placeOrder(OrchestrationRequestContext ctx){
+
+    public Mono<OrchestrationRequestContext> placeOrder(OrchestrationRequestContext ctx) {
         var list = orchestrators.stream()
-                                                                       .map(o -> o.create(ctx))
-                                                                       .collect(Collectors.toList());
+                .map(o -> o.create(ctx))
+                .collect(Collectors.toList());
         return Mono.zip(list, a -> a[0])
                 .cast(OrchestrationRequestContext.class)
                 .doOnNext(this::updateStatus);
     }
 
-    private void updateStatus(OrchestrationRequestContext ctx){
+    private void updateStatus(OrchestrationRequestContext ctx) {
         var allSuccess = this.orchestrators.stream().allMatch(o -> o.isSuccess().test(ctx));
         var status = allSuccess ? Status.SUCCESS : Status.FAILED;
         ctx.setStatus(status);
